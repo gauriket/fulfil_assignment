@@ -1,14 +1,20 @@
 "use client";
+
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 
 export default function UploadPage() {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState(false);
+
   const fileRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  async function handleUpload() {
+  const handleUpload = async () => {
     const file = fileRef.current?.files?.[0];
     if (!file) return alert("Please select a CSV file");
 
@@ -17,27 +23,61 @@ export default function UploadPage() {
 
     setLoading(true);
     setStatus("Uploading...");
+    setProgress(0);
+    setUploadError(false);
 
     try {
-      const res = await fetch("http://localhost:8000/upload", {
-        method: "POST",
-        body: form,
+      const res = await axios.post("http://localhost:8000/upload", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (event) => {
+          if (event.total) {
+            // Upload is phase 1, scale 0-50%
+            const percent = Math.round((event.loaded * 10) / event.total);
+            setProgress(percent);
+            setStatus(`Uploading... ${percent}%`);
+          }
+        },
       });
-      if (!res.ok) throw new Error("Upload failed");
 
-      setStatus("Upload successful!");
-      router.push("/products"); // redirect to products page
+      const { job_id } = res.data;
+      setJobId(job_id);
+      setStatus("Upload complete! Processing CSV...");
+      pollJobStatus(job_id);
     } catch (err: any) {
       console.error(err);
-      setStatus(err.message || "Upload failed");
+      setStatus("Upload failed. Please try again.");
+      setUploadError(true);
     } finally {
       setLoading(false);
     }
-  }
+  };
+
+  const pollJobStatus = (job_id: string) => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`http://localhost:8000/job_status/${job_id}`);
+        const data = await res.json();
+
+        // Processing is phase 2, scale 10-100%
+        const percent = Math.round(10 + (data.progress / 2));
+        setProgress(percent);
+        setStatus(data.message);
+
+        if (data.status === "completed" || data.status === "failed") {
+          clearInterval(interval);
+          if (data.status === "failed") setUploadError(true);
+        }
+      } catch (err) {
+        console.error(err);
+        clearInterval(interval);
+        setStatus("Error fetching job status");
+        setUploadError(true);
+      }
+    }, 10000);
+  };
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen bg-gray-50 px-4">
-
       <div className="w-full max-w-md bg-white rounded-2xl shadow p-6">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4 text-center">
           Upload Products CSV
@@ -53,8 +93,9 @@ export default function UploadPage() {
         <button
           onClick={handleUpload}
           disabled={loading}
-          className={`w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition duration-150 ${loading ? "opacity-70 cursor-not-allowed" : ""
-            }`}
+          className={`w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition duration-150 ${
+            loading ? "opacity-70 cursor-not-allowed" : ""
+          }`}
         >
           {loading && (
             <svg
@@ -81,31 +122,48 @@ export default function UploadPage() {
           {loading ? "Uploading..." : "Upload"}
         </button>
 
-        {status && (
-          <div
-            className={`mt-4 text-center font-medium ${status.toLowerCase().includes("failed") ? "text-red-500" : "text-green-600"
-              }`}
-          >
-            {status}
+        {progress > 0 && (
+          <div className="w-full bg-gray-200 rounded-full h-4 mt-4">
+            <div
+              className="bg-blue-600 h-4 rounded-full transition-all duration-200"
+              style={{ width: `${progress}%` }}
+            ></div>
           </div>
         )}
+
+        {status && (
+          <div
+            className={`mt-4 text-center font-medium ${
+              uploadError ? "text-red-500" : "text-green-600"
+            }`}
+          >
+            {status} - {progress}%
+          </div>
+        )}
+
+        {uploadError && (
+          <button
+            className="mt-4 w-full bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 rounded-lg"
+            onClick={handleUpload}
+          >
+            Retry
+          </button>
+        )}
       </div>
-      <div className="w-full my-5 max-w-md">
-        <div className="flex justify-between mb-4">
-          {/* Navigation Buttons */}
-          <button
-            className="bg-blue-700 hover:bg-green-600 text-white font-medium py-2 px-4 mx-5 rounded-lg"
-            onClick={() => router.push("/products")}
-          >
-            Go to Products
-          </button>
-          <button
-            className="bg-blue-900 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded-lg"
-            onClick={() => router.push("/webhooks")}
-          >
-            Go to Webhooks
-          </button>
-        </div>
+
+      <div className="w-full my-5 max-w-md flex justify-between">
+        <button
+          className="bg-blue-700 hover:bg-green-600 text-white font-medium py-2 px-4 mx-5 rounded-lg"
+          onClick={() => router.push("/products")}
+        >
+          Go to Products
+        </button>
+        <button
+          className="bg-blue-900 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded-lg"
+          onClick={() => router.push("/webhooks")}
+        >
+          Go to Webhooks
+        </button>
       </div>
     </main>
   );

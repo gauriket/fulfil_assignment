@@ -8,6 +8,7 @@ from tasks import import_csv
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import webhook
+from tasks import job_status
 
 app = FastAPI()
 app.include_router(webhook.router, prefix="", tags=["Webhooks"])
@@ -24,18 +25,35 @@ app.add_middleware(
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+from fastapi import BackgroundTasks
 
 @app.post("/upload")
-async def upload_csv(file: UploadFile = File(...)):
+async def upload_csv(file: UploadFile = File(...), background_tasks: BackgroundTasks = None):
     if not file.filename.lower().endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only CSV allowed")
+
     job_id = str(uuid.uuid4())
     file_path = os.path.join(UPLOAD_DIR, f"{job_id}.csv")
+
+    # Save file
     async with aiofiles.open(file_path, "wb") as out:
         while chunk := await file.read(1024 * 1024):
             await out.write(chunk)
-    import_csv(file_path, job_id)
+
+    # Initialize job status
+    job_status[job_id] = {"status": "processing", "progress": 0, "message": "Parsing CSV"}
+
+    # Run import_csv in background so upload returns immediately
+    background_tasks.add_task(import_csv, file_path, job_id)
+
     return {"job_id": job_id}
+
+
+@app.get("/job_status/{job_id}")
+def get_job_status(job_id: str):
+    return job_status.get(
+        job_id, {"status": "unknown", "progress": 0, "message": "Job not found"}
+    )
 
 
 @app.get("/products", response_model=List[ProductOut])

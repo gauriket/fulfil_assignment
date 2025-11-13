@@ -9,16 +9,19 @@ REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 redis_client = Redis.from_url(REDIS_URL, decode_responses=True)
 
+job_status = {}
+
 
 def import_csv(file_path, job_id):
+    job_status[job_id] = {
+        "status": "processing",
+        "progress": 0,
+        "message": "Parsing CSV",
+    }
     db: Session = SessionLocal()
     try:
         total = sum(1 for _ in open(file_path, encoding="utf-8", errors="ignore")) - 1
         processed = 0
-        redis_client.hset(
-            f"import:{job_id}",
-            mapping={"status": "Parsing CSV", "processed": 0, "total": total},
-        )
 
         with open(file_path, encoding="utf-8", errors="ignore") as f:
             reader = csv.DictReader(f)
@@ -39,21 +42,18 @@ def import_csv(file_path, job_id):
 
                 upsert_product(db, product)
                 processed += 1
+                job_status[job_id]["progress"] = int((processed / total) * 100)
 
                 if processed % 500 == 0:
                     db.commit()
 
             db.commit()
 
-        redis_client.hset(
-            f"import:{job_id}",
-            mapping={"status": "Import Complete", "processed": processed},
-        )
+        job_status[job_id]["status"] = "completed"
+        job_status[job_id]["message"] = "Import complete"
 
     except Exception as e:
-        redis_client.hset(
-            f"import:{job_id}", mapping={"status": "Failed", "error": str(e)}
-        )
+        job_status[job_id]={"status": "unknown", "progress": 0, "message": "Job not found"}
         raise
     finally:
         db.close()

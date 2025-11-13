@@ -1,5 +1,4 @@
 import os, csv, uuid
-from celery import Celery
 from sqlalchemy.orm import Session
 from redis import Redis
 from db import SessionLocal
@@ -8,12 +7,9 @@ from schemas import ProductCreate
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
-from celery_app import celery
-
 redis_client = Redis.from_url(REDIS_URL, decode_responses=True)
 
 
-# @celery.task(bind=True)
 def import_csv(file_path, job_id):
     db: Session = SessionLocal()
     try:

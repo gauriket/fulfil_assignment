@@ -37,6 +37,7 @@ export default function UploadPage() {
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen bg-gray-50 px-4">
+
       <div className="w-full max-w-md bg-white rounded-2xl shadow p-6">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4 text-center">
           Upload Products CSV
@@ -88,6 +89,23 @@ export default function UploadPage() {
             {status}
           </div>
         )}
+      </div>
+      <div className="w-full my-5 max-w-md">
+        <div className="flex justify-between mb-4">
+          {/* Navigation Buttons */}
+          <button
+            className="bg-blue-700 hover:bg-green-600 text-white font-medium py-2 px-4 mx-5 rounded-lg"
+            onClick={() => router.push("/products")}
+          >
+            Go to Products
+          </button>
+          <button
+            className="bg-blue-900 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded-lg"
+            onClick={() => router.push("/webhooks")}
+          >
+            Go to Webhooks
+          </button>
+        </div>
       </div>
     </main>
   );

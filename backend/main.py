@@ -7,8 +7,11 @@ from schemas import ProductCreate, ProductIn, ProductOut
 from tasks import import_csv
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+import webhook
 
 app = FastAPI()
+app.include_router(webhook.router, prefix="", tags=["Webhooks"])
+
 
 app.add_middleware(
     CORSMiddleware,

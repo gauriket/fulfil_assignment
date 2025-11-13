@@ -9,7 +9,9 @@ from schemas import ProductCreate
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 from celery_app import celery
+
 redis_client = Redis.from_url(REDIS_URL, decode_responses=True)
+
 
 # @celery.task(bind=True)
 def import_csv(file_path, job_id):
@@ -17,7 +19,10 @@ def import_csv(file_path, job_id):
     try:
         total = sum(1 for _ in open(file_path, encoding="utf-8", errors="ignore")) - 1
         processed = 0
-        redis_client.hset(f"import:{job_id}", mapping={"status": "Parsing CSV", "processed": 0, "total": total})
+        redis_client.hset(
+            f"import:{job_id}",
+            mapping={"status": "Parsing CSV", "processed": 0, "total": total},
+        )
 
         with open(file_path, encoding="utf-8", errors="ignore") as f:
             reader = csv.DictReader(f)
@@ -33,7 +38,7 @@ def import_csv(file_path, job_id):
                     name=row.get("name"),
                     description=row.get("description"),
                     price=price,
-                    active=True
+                    active=True,
                 )
 
                 upsert_product(db, product)
@@ -44,10 +49,15 @@ def import_csv(file_path, job_id):
 
             db.commit()
 
-        redis_client.hset(f"import:{job_id}", mapping={"status": "Import Complete", "processed": processed})
+        redis_client.hset(
+            f"import:{job_id}",
+            mapping={"status": "Import Complete", "processed": processed},
+        )
 
     except Exception as e:
-        redis_client.hset(f"import:{job_id}", mapping={"status": "Failed", "error": str(e)})
+        redis_client.hset(
+            f"import:{job_id}", mapping={"status": "Failed", "error": str(e)}
+        )
         raise
     finally:
         db.close()

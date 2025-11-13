@@ -52,9 +52,8 @@ export default function UploadPage() {
         <button
           onClick={handleUpload}
           disabled={loading}
-          className={`w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition duration-150 ${
-            loading ? "opacity-70 cursor-not-allowed" : ""
-          }`}
+          className={`w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition duration-150 ${loading ? "opacity-70 cursor-not-allowed" : ""
+            }`}
         >
           {loading && (
             <svg
@@ -83,9 +82,8 @@ export default function UploadPage() {
 
         {status && (
           <div
-            className={`mt-4 text-center font-medium ${
-              status.toLowerCase().includes("failed") ? "text-red-500" : "text-green-600"
-            }`}
+            className={`mt-4 text-center font-medium ${status.toLowerCase().includes("failed") ? "text-red-500" : "text-green-600"
+              }`}
           >
             {status}
           </div>

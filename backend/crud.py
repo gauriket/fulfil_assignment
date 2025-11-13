@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from models import Product
 from schemas import ProductCreate
 
+
 def upsert_product(db: Session, product: ProductCreate):
     stmt = insert(Product).values(
         sku=product.sku,

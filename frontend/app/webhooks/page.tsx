@@ -22,11 +22,14 @@ export default function WebhookManagement() {
     const [testingWebhookId, setTestingWebhookId] = useState<number | null>(null);
     const [testResult, setTestResult] = useState<{ status_code: number; response_time_ms: number } | null>(null);
 
-
+    let API_URL = process.env.NEXT_PUBLIC_API_URL;
+    if (!API_URL) {
+        API_URL = "http://localhost:8000";
+    }
     // Fetch webhooks from API
     const fetchWebhooks = async () => {
         setLoading(true);
-        const res = await fetch("http://localhost:8000/webhooks"); // adjust base URL
+        const res = await fetch(`${API_URL}/webhooks`); // adjust base URL
         setWebhooks(await res.json());
         setLoading(false);
     };
@@ -35,7 +38,7 @@ export default function WebhookManagement() {
         setTestingWebhookId(id);
         setTestResult(null);
         try {
-            const res = await fetch(`http://localhost:8000/webhooks/${id}/test`, { method: "POST" });
+            const res = await fetch(`${API_URL}/${id}/test`, { method: "POST" });
             const result = await res.json();
             setTestResult(result);
 
@@ -52,7 +55,7 @@ export default function WebhookManagement() {
     const deleteWebhook = async (id: number) => {
         if (!confirm("Are you sure you want to delete this webhook?")) return;
         setLoading(true);
-        await fetch(`http://localhost:8000/webhooks/${id}`, { method: "DELETE" });
+        await fetch(`${API_URL}/webhooks/${id}`, { method: "DELETE" });
         fetchWebhooks();
     };
 
@@ -206,7 +209,7 @@ export default function WebhookManagement() {
                                 onClick={async () => {
                                     if (!selectedWebhook) return;
 
-                                    const backendUrl = "http://localhost:8000";
+                                    const backendUrl = `${API_URL}`;
                                     const isEdit = Boolean(selectedWebhook.id);
 
                                     // Only include required fields for POST

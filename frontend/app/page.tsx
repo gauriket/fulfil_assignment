@@ -10,6 +10,10 @@ export default function UploadPage() {
   const [progress, setProgress] = useState(0);
   const [jobId, setJobId] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState(false);
+  let API_URL = process.env.NEXT_PUBLIC_API_URL;
+  if(!API_URL){
+    API_URL="http://localhost:8000";
+  }
 
   const fileRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -27,7 +31,7 @@ export default function UploadPage() {
     setUploadError(false);
 
     try {
-      const res = await axios.post("http://localhost:8000/upload", form, {
+      const res = await axios.post(`${API_URL}/upload`, form, {
         headers: { "Content-Type": "multipart/form-data" },
         onUploadProgress: (event) => {
           if (event.total) {
@@ -55,7 +59,7 @@ export default function UploadPage() {
   const pollJobStatus = (job_id: string) => {
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`http://localhost:8000/job_status/${job_id}`);
+        const res = await fetch(`${API_URL}/job_status/${job_id}`);
         const data = await res.json();
 
         // Processing is phase 2, scale 10-100%

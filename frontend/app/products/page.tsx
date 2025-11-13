@@ -19,6 +19,10 @@ export default function ProductManagement() {
     const [modalOpen, setModalOpen] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
     const [bulkDeleting, setBulkDeleting] = useState(false);
+    let API_URL = process.env.NEXT_PUBLIC_API_URL;
+    if (!API_URL) {
+        API_URL = "http://localhost:8000";
+    }
 
 
     const fetchProducts = async () => {
@@ -28,7 +32,7 @@ export default function ProductManagement() {
         params.append("skip", (page * 20).toString());
         params.append("limit", "20");
 
-        const res = await fetch(`http://localhost:8000/products?${params.toString()}`);
+        const res = await fetch(`${API_URL}/products?${params.toString()}`);
         const data = await res.json();
         setProducts(data);
         setLoading(false);
@@ -41,19 +45,19 @@ export default function ProductManagement() {
     // Update the delete function to use SKU
     const deleteProduct = async (sku: string) => {
         if (!confirm("Are you sure you want to delete this product?")) return;
-        await fetch(`http://localhost:8000/products/${sku}`, { method: "DELETE" });
+        await fetch(`${API_URL}/products/${sku}`, { method: "DELETE" });
         fetchProducts();
     };
 
     const saveProduct = async (product: Partial<Product> & { id?: number }) => {
         if (isEdit) {
-            await fetch(`http://localhost:8000/products/${product.sku}`, {
+            await fetch(`${API_URL}/products/${product.sku}`, {
                 method: "PUT",
                 body: JSON.stringify(product),
                 headers: { "Content-Type": "application/json" },
             });
         } else {
-            await fetch(`http://localhost:8000/products`, {
+            await fetch(`${API_URL}/products`, {
                 method: "POST",
                 body: JSON.stringify(product),
                 headers: { "Content-Type": "application/json" },
@@ -68,7 +72,7 @@ export default function ProductManagement() {
 
         try {
             setBulkDeleting(true); // show spinner
-            const res = await fetch(`http://localhost:8000/products`, {
+            const res = await fetch(`${API_URL}/products`, {
                 method: "DELETE",
             });
 

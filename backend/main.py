@@ -16,7 +16,7 @@ app.include_router(webhook.router, prefix="", tags=["Webhooks"])
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # your frontend URL
+    allow_origins=["http://localhost:3000", "https://fulfil-assignment.vercel.app/"],  # your frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

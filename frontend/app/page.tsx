@@ -1,11 +1,12 @@
 "use client";
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 
-export default function Home() {
-  const [jobId, setJobId] = useState("");
+export default function UploadPage() {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   async function handleUpload() {
     const file = fileRef.current?.files?.[0];
@@ -24,13 +25,11 @@ export default function Home() {
       });
       if (!res.ok) throw new Error("Upload failed");
 
-      const data = await res.json();
-      setJobId(data.job_id);
       setStatus("Upload successful!");
+      router.push("/products"); // redirect to products page
     } catch (err: any) {
       console.error(err);
       setStatus(err.message || "Upload failed");
-      setJobId("");
     } finally {
       setLoading(false);
     }
@@ -85,16 +84,10 @@ export default function Home() {
         {status && (
           <div
             className={`mt-4 text-center font-medium ${
-              status.includes("failed") ? "text-red-500" : "text-green-600"
+              status.toLowerCase().includes("failed") ? "text-red-500" : "text-green-600"
             }`}
           >
             {status}
-          </div>
-        )}
-
-        {jobId && (
-          <div className="mt-2 text-sm text-gray-600 text-center">
-            Job ID: {jobId}
           </div>
         )}
       </div>

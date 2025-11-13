@@ -1,31 +1,122 @@
 # Fulfil Assignment - CSV Product Uploader
 
-This project provides a **CSV uploader** for products with real-time progress feedback.
-It consists of:
+A full-stack application for managing products with CSV import capabilities, real-time progress tracking, and webhook notifications.
 
-* **Backend:** FastAPI + PostgreSQL (hosted on Railway)
-* **Frontend:** Next.js + Tailwind CSS (hosted on Vercel)
-* **Features:** Upload CSV, live progress bar, job status polling, retry on error.
+**Status:** ✅ Production Ready  
+**Last Updated:** November 13, 2025
 
 ---
 
-## Live Demo
+## Overview
 
-* Frontend: [https://fulfil-assignment.vercel.app](https://fulfil-assignment.vercel.app)
-* Backend API: [https://fulfilassignment-production.up.railway.app](https://fulfilassignment-production.up.railway.app)
+This project provides a comprehensive product management system with:
+
+- 📤 **CSV Upload** with real-time progress tracking
+- 🔍 **Product Management** (CRUD operations with search/filter)
+- 🪝 **Webhook Integration** for event notifications
+- 📊 **Real-time Status Updates** via job polling
+- 🛡️ **Data Validation** with Pydantic
+- 🚀 **Production Ready** deployment to Railway + Vercel
+
+---
+
+## Quick Links
+
+### Documentation
+
+| Document | Purpose |
+|----------|---------|
+| [API_DOCUMENTATION.md](API_DOCUMENTATION.md) | Complete API reference with examples |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | System design and data flow diagrams |
+| [BACKEND_SETUP.md](BACKEND_SETUP.md) | Backend installation and configuration |
+| [FRONTEND_SETUP.md](FRONTEND_SETUP.md) | Frontend installation and configuration |
+
+### Live Demo
+
+- **Frontend:** [https://fulfil-assignment.vercel.app](https://fulfil-assignment.vercel.app)
+- **Backend API:** [https://fulfilassignment-production.up.railway.app](https://fulfilassignment-production.up.railway.app)
+- **API Docs:** [https://fulfilassignment-production.up.railway.app/docs](https://fulfilassignment-production.up.railway.app/docs)
 
 ---
 
 ## Features
 
-* Real-time upload progress (0–50% for file upload, 50–100% for CSV processing)
-* Polling for CSV processing progress
-* Error handling with retry option
-* Visual feedback with progress bar and status messages
+### Core Features
+
+✨ **CSV Import**
+- Batch upload products via CSV file
+- Real-time progress tracking (0-100%)
+- Automatic file validation and cleanup
+- Error handling with retry functionality
+
+🎯 **Product Management**
+- Create, read, update, and delete products
+- Advanced search by SKU, name, description
+- Filter by active status
+- Pagination support (default 20 items)
+
+🪝 **Webhook Management**
+- Configure webhook endpoints
+- Subscribe to event types
+- Test webhook connectivity
+- Enable/disable webhooks
+
+📱 **User Interface**
+- Responsive design with Tailwind CSS
+- Real-time progress visualization
+- Status messages and error feedback
+- Navigation between different pages
 
 ---
 
-## Prerequisites
+## Tech Stack
+
+### Backend
+- **Framework:** FastAPI (Python 3.10+)
+- **Database:** PostgreSQL 12+
+- **ORM:** SQLAlchemy 2.0+
+- **Validation:** Pydantic v2
+- **Server:** Uvicorn
+- **Async:** aiofiles, httpx
+
+### Frontend
+- **Framework:** Next.js 14+
+- **Language:** TypeScript
+- **UI Library:** React 18+
+- **Styling:** Tailwind CSS
+- **HTTP Client:** Axios
+- **Deployment:** Vercel
+
+### Infrastructure
+- **Backend Hosting:** Railway
+- **Database:** Railway PostgreSQL
+- **Frontend Hosting:** Vercel
+- **Storage:** Filesystem (uploads/)
+
+---
+
+## Architecture at a Glance
+
+```
+┌─────────────────┐
+│  Browser        │
+│  (Next.js App)  │
+└────────┬────────┘
+         │ HTTP/REST
+         ↓
+┌─────────────────┐
+│  FastAPI        │
+│  + PostgreSQL   │
+└─────────────────┘
+
+Full architecture: See ARCHITECTURE.md
+```
+
+---
+
+## Getting Started
+
+### Prerequisites
 
 * Node.js >= 18
 * Python >= 3.10
@@ -37,19 +128,23 @@ It consists of:
 
 ## Environment Variables
 
-### Backend (`.env` or Railway environment variables)
+### Backend (.env)
 
 ```env
+# Required
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/products_db
+
 ```
 
-> **Important:** On Railway, replace `localhost` with the Railway PostgreSQL connection string.
-
-### Frontend (`.env.local` for Vercel / local development)
+### Frontend (.env.local)
 
 ```env
-NEXT_PUBLIC_API_URL=https://fulfilassignment-production.up.railway.app
+NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
+
+### Production (Railway/Vercel)
+
+Set environment variables in respective dashboards.
 
 ---
 
@@ -167,19 +262,82 @@ npm run start
 
 ---
 
-## Troubleshooting
+## Project Structure
 
-* **Connection Refused / OperationalError:** Check that `DATABASE_URL` is correct and database is accessible.
-* **CORS errors:** Make sure the frontend URL is in the FastAPI `allow_origins`.
-* **Progress bar jumps / incorrect:** Ensure frontend polls `/job_status/{job_id}` and scales upload vs processing progress correctly.
+```
+fulfil_assignment/
+├── backend/                  # FastAPI backend
+│   ├── main.py              # API endpoints
+│   ├── models.py            # Database models
+│   ├── schemas.py           # Pydantic schemas
+│   ├── crud.py              # Database operations
+│   ├── db.py                # Database setup
+│   ├── tasks.py             # CSV import task
+│   ├── webhook.py           # Webhook endpoints
+│   └── requirements.txt      # Python dependencies
+├── frontend/                 # Next.js frontend
+│   ├── app/
+│   │   ├── page.tsx         # Upload page
+│   │   ├── products/        # Products page
+│   │   ├── webhooks/        # Webhooks page
+│   │   └── layout.tsx       # Root layout
+│   ├── package.json         # Node dependencies
+│   └── tsconfig.json        # TypeScript config
+├── uploads/                  # Temporary CSV files
+├── API_DOCUMENTATION.md      # Full API reference
+├── ARCHITECTURE.md           # System design
+├── BACKEND_SETUP.md          # Backend setup
+└── FRONTEND_SETUP.md         # Frontend setup
+```
 
 ---
 
-## Tech Stack
+## Troubleshooting
 
-* **Backend:** FastAPI, SQLAlchemy, PostgreSQL
-* **Frontend:** Next.js, TypeScript, Tailwind CSS, Axios
-* **Deployment:** Railway (backend), Vercel (frontend)
+### Common Issues
+
+**CORS Error**
+- Add your frontend URL to `allow_origins` in `main.py`
+- Restart backend server
+
+**Cannot Connect to Database**
+- Ensure PostgreSQL is running
+- Check `DATABASE_URL` is correct
+- Test connection: `psql postgresql://...`
+
+**Port Already in Use**
+- Kill process: `lsof -i :8000` or `netstat -ano | findstr :8000`
+- Use different port: `uvicorn main:app --port 8001`
+
+**Build Failed**
+- Clear cache: `rm -rf .next node_modules`
+- Reinstall: `npm install && npm run build`
+
+
+---
+
+## Deployment
+
+### Deploy to Railway (Backend)
+
+1. Connect GitHub repository to Railway
+2. Set `DATABASE_URL` environment variable
+3. Railway auto-deploys on push
+
+### Deploy to Vercel (Frontend)
+
+1. Connect GitHub repository to Vercel
+2. Set `NEXT_PUBLIC_API_URL` environment variable
+3. Vercel auto-deploys on push
+
+---
+
+## Documentation
+
+- **[API_DOCUMENTATION.md](API_DOCUMENTATION.md)** - Complete API reference
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System design and diagrams
+- **[BACKEND_SETUP.md](BACKEND_SETUP.md)** - Detailed backend setup
+- **[FRONTEND_SETUP.md](FRONTEND_SETUP.md)** - Detailed frontend setup
 
 ---
 

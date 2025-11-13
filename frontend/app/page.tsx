@@ -4,20 +4,53 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 
+/**
+ * CSV Upload Page Component
+ * 
+ * Provides functionality for users to:
+ * 1. Select and upload a CSV file containing product data
+ * 2. Monitor real-time upload and processing progress
+ * 3. Handle errors with retry capability
+ * 4. Navigate to product and webhook management pages
+ * 
+ * Features:
+ * - Real-time progress bar (0-50% upload, 50-100% processing)
+ * - Job ID tracking for status polling
+ * - Automatic progress polling every 10 seconds
+ * - Error handling with user-friendly messages
+ * - Retry functionality on failed uploads
+ */
 export default function UploadPage() {
+  // UI State Management
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [jobId, setJobId] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState(false);
+  
+  // API Configuration
   let API_URL = process.env.NEXT_PUBLIC_API_URL;
-  if(!API_URL){
-    API_URL="http://localhost:8000";
+  if (!API_URL) {
+    API_URL = "http://localhost:8000";
   }
 
   const fileRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
+  /**
+   * Handles CSV file upload to the backend.
+   * 
+   * Process:
+   * 1. Validates file selection
+   * 2. Creates FormData with the CSV file
+   * 3. Sends POST request to /upload with progress tracking
+   * 4. Receives job_id from server
+   * 5. Initiates polling for job status
+   * 
+   * Progress Scaling:
+   * - Upload phase: 0-50% (based on file upload progress)
+   * - Processing phase: 50-100% (based on CSV import progress)
+   */
   const handleUpload = async () => {
     const file = fileRef.current?.files?.[0];
     if (!file) return alert("Please select a CSV file");
@@ -56,6 +89,21 @@ export default function UploadPage() {
     }
   };
 
+  /**
+   * Polls the backend for job status every 10 seconds.
+   * 
+   * Updates:
+   * - Progress percentage (10-100%)
+   * - Status message
+   * - Error state if processing fails
+   * 
+   * Stops polling when:
+   * - Job status becomes "completed"
+   * - Job status becomes "failed"
+   * - Network error occurs
+   * 
+   * @param job_id - Unique identifier for the import job
+   */
   const pollJobStatus = (job_id: string) => {
     const interval = setInterval(async () => {
       try {
@@ -82,11 +130,13 @@ export default function UploadPage() {
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen bg-gray-50 px-4">
+      {/* Main Upload Card */}
       <div className="w-full max-w-md bg-white rounded-2xl shadow p-6">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4 text-center">
           Upload Products CSV
         </h2>
 
+        {/* File Input */}
         <input
           type="file"
           accept=".csv"
@@ -94,6 +144,7 @@ export default function UploadPage() {
           className="w-full text-sm text-gray-700 border border-gray-300 rounded-lg p-2 mb-4 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
 
+        {/* Upload Button */}
         <button
           onClick={handleUpload}
           disabled={loading}
@@ -126,6 +177,7 @@ export default function UploadPage() {
           {loading ? "Uploading..." : "Upload"}
         </button>
 
+        {/* Progress Bar */}
         {progress > 0 && (
           <div className="w-full bg-gray-200 rounded-full h-4 mt-4">
             <div
@@ -135,6 +187,7 @@ export default function UploadPage() {
           </div>
         )}
 
+        {/* Status Message */}
         {status && (
           <div
             className={`mt-4 text-center font-medium ${
@@ -145,6 +198,7 @@ export default function UploadPage() {
           </div>
         )}
 
+        {/* Retry Button */}
         {uploadError && (
           <button
             className="mt-4 w-full bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 rounded-lg"
@@ -155,6 +209,7 @@ export default function UploadPage() {
         )}
       </div>
 
+      {/* Navigation Buttons */}
       <div className="w-full my-5 max-w-md flex justify-between">
         <button
           className="bg-blue-700 hover:bg-green-600 text-white font-medium py-2 px-4 mx-5 rounded-lg"
